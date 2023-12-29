@@ -38,7 +38,7 @@ spec:
             secretKeyRef:  
               name: flowise-secrets
               key: flowise_password  
-        image: "us-docker.pkg.dev/trending-threats/gcr.io/flowise:dev"
+        image: "gcr.io/trending-threats/github.com/fletch-ai/flowise"
         imagePullPolicy: "Always"
         resources: 
           requests:
