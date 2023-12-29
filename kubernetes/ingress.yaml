@@ -1,0 +1,17 @@
+# ingress.yaml
+apiVersion: "networking.k8s.io/v1"
+kind: "Ingress"
+metadata:
+  name: "flowise-ingress"
+  namespace: "default"
+  annotations:
+    networking.gke.io/managed-certificates: "flowise-cert"
+spec:
+  defaultBackend:
+    service:
+      name: "flowise-service"
+      port:
+        number: 80
+status:
+  loadBalancer: {}
+

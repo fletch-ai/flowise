@@ -1,0 +1,18 @@
+# service.yaml
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "flowise-service"
+  namespace: "default"
+  labels:
+    app: "flowise"
+  annotations:
+    cloud.google.com/load-balancer-type: "Internal"  # Required for HTTPS
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 3000
+  selector:
+    app: "flowise"
+  type: "LoadBalancer"
