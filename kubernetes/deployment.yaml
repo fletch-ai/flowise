@@ -18,8 +18,10 @@ spec:
       containers:
       - name: "flowise"
         env:
+        - name: DEBUG
+          value: "true"
         - name: LOG_LEVEL
-          value: "verbose"
+          value: "debug"
         - name: DATABASE_PATH
           value: "/opt/flowise"
         - name: APIKEY_PATH
