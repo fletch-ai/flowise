@@ -32,7 +32,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: flowise-secrets
-              key: flowise_secretkey_overwrite  
+              key: flowise_secretkey_overwrite
         - name: LOG_PATH
           value: "/opt/flowise/logs"
         - name: FLOWISE_USERNAME
@@ -41,7 +41,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: flowise-secrets
-              key: flowise_password  
+              key: flowise_password
         image: "gcr.io/trending-threats/github.com/fletch-ai/flowise"
         imagePullPolicy: "Always"
         resources:
