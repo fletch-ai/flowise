@@ -1,0 +1,8 @@
+# backendconfig.yaml
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: flowise-backendconfig
+  namespace: default
+spec:
+  timeoutSec: 600

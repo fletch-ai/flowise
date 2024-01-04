@@ -8,6 +8,7 @@ metadata:
     app: "flowise"
   annotations:
     cloud.google.com/load-balancer-type: "Internal"  # Required for HTTPS
+    cloud.google.com/backend-config: '{"default": "flowise-backendconfig"}'
 spec:
   ports:
   - protocol: "TCP"
