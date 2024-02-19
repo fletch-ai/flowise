@@ -83,6 +83,14 @@ class ChatLocalAI_ChatModels implements INode {
                 step: 1,
                 optional: true,
                 additionalParams: true
+            },
+            {
+                label: 'Streaming',
+                name: 'streaming',
+                type: 'boolean',
+                default: false,
+                optional: true,
+                additionalParams: true
             }
         ]
     }
@@ -93,6 +101,7 @@ class ChatLocalAI_ChatModels implements INode {
         const maxTokens = nodeData.inputs?.maxTokens as string
         const topP = nodeData.inputs?.topP as string
         const timeout = nodeData.inputs?.timeout as string
+        const streaming = nodeData.inputs?.streaming as boolean
         const basePath = nodeData.inputs?.basePath as string
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const localAIApiKey = getCredentialParam('localAIApiKey', credentialData, nodeData)
@@ -102,6 +111,7 @@ class ChatLocalAI_ChatModels implements INode {
         const obj: Partial<OpenAIChatInput> & BaseLLMParams & { openAIApiKey?: string } = {
             temperature: parseFloat(temperature),
             modelName,
+            streaming: streaming ?? false,
             openAIApiKey: 'sk-'
         }
 
