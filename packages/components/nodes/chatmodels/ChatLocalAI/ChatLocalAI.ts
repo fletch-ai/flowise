@@ -20,7 +20,7 @@ class ChatLocalAI_ChatModels implements INode {
     constructor() {
         this.label = 'ChatLocalAI'
         this.name = 'chatLocalAI'
-        this.version = 2.0
+        this.version = 2.1
         this.type = 'ChatLocalAI'
         this.icon = 'localai.png'
         this.category = 'Chat Models'
