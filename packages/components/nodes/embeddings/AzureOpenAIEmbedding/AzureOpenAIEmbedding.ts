@@ -17,7 +17,7 @@ class AzureOpenAIEmbedding_Embeddings implements INode {
     constructor() {
         this.label = 'Azure OpenAI Embeddings'
         this.name = 'azureOpenAIEmbeddings'
-        this.version = 1.1
+        this.version = 1.0
         this.type = 'AzureOpenAIEmbeddings'
         this.icon = 'Azure.svg'
         this.category = 'Embeddings'
@@ -55,18 +55,12 @@ class AzureOpenAIEmbedding_Embeddings implements INode {
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const azureOpenAIApiKey = getCredentialParam('azureOpenAIApiKey', credentialData, nodeData)
         const azureOpenAIApiInstanceName = getCredentialParam('azureOpenAIApiInstanceName', credentialData, nodeData)
-        const azureOpenAIBasePath = getCredentialParam('azureOpenAIBasePath', credentialData, nodeData)
         const azureOpenAIApiDeploymentName = getCredentialParam('azureOpenAIApiDeploymentName', credentialData, nodeData)
         const azureOpenAIApiVersion = getCredentialParam('azureOpenAIApiVersion', credentialData, nodeData)
-
-        if (!azureOpenAIApiInstanceName && !azureOpenAIBasePath) {
-            throw new Error("Either 'azureOpenAIApiInstanceName' or 'azureOpenAIBasePath' must be provided.")
-        }
 
         const obj: Partial<OpenAIEmbeddingsParams> & Partial<AzureOpenAIInput> = {
             azureOpenAIApiKey,
             azureOpenAIApiInstanceName,
-            azureOpenAIBasePath,
             azureOpenAIApiDeploymentName,
             azureOpenAIApiVersion
         }

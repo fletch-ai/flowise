@@ -19,7 +19,7 @@ class AzureOpenAI_LLMs implements INode {
     constructor() {
         this.label = 'Azure OpenAI'
         this.name = 'azureOpenAI'
-        this.version = 2.2
+        this.version = 2.1
         this.type = 'AzureOpenAI'
         this.icon = 'Azure.svg'
         this.category = 'LLMs'
@@ -176,22 +176,16 @@ class AzureOpenAI_LLMs implements INode {
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const azureOpenAIApiKey = getCredentialParam('azureOpenAIApiKey', credentialData, nodeData)
         const azureOpenAIApiInstanceName = getCredentialParam('azureOpenAIApiInstanceName', credentialData, nodeData)
-        const azureOpenAIBasePath = getCredentialParam('azureOpenAIBasePath', credentialData, nodeData)
         const azureOpenAIApiDeploymentName = getCredentialParam('azureOpenAIApiDeploymentName', credentialData, nodeData)
         const azureOpenAIApiVersion = getCredentialParam('azureOpenAIApiVersion', credentialData, nodeData)
 
         const cache = nodeData.inputs?.cache as BaseCache
-
-        if (!azureOpenAIApiInstanceName && !azureOpenAIBasePath) {
-            throw new Error("Either 'azureOpenAIApiInstanceName' or 'azureOpenAIBasePath' must be provided.")
-        }
 
         const obj: Partial<AzureOpenAIInput> & BaseLLMParams & Partial<OpenAIInput> = {
             temperature: parseFloat(temperature),
             modelName,
             azureOpenAIApiKey,
             azureOpenAIApiInstanceName,
-            azureOpenAIBasePath,
             azureOpenAIApiDeploymentName,
             azureOpenAIApiVersion,
             streaming: streaming ?? true

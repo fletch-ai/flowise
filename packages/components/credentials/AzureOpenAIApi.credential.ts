@@ -10,7 +10,7 @@ class AzureOpenAIApi implements INodeCredential {
     constructor() {
         this.label = 'Azure OpenAI API'
         this.name = 'azureOpenAIApi'
-        this.version = 2.0
+        this.version = 1.0
         this.description =
             'Refer to <a target="_blank" href="https://azure.microsoft.com/en-us/products/cognitive-services/openai-service">official guide</a> of how to use Azure OpenAI service'
         this.inputs = [
@@ -24,17 +24,7 @@ class AzureOpenAIApi implements INodeCredential {
                 label: 'Azure OpenAI Api Instance Name',
                 name: 'azureOpenAIApiInstanceName',
                 type: 'string',
-                description: 'Required if you are using Azure OpenAI Cloud Services. Leave empty if you are using a 3rd party proxy.',
-                placeholder: 'YOUR-INSTANCE-NAME',
-                optional: true
-            },
-            {
-                label: 'Azure OpenAI Api Base Path',
-                name: 'azureOpenAIBasePath',
-                type: 'string',
-                description: 'Required if you are using a 3rd party proxy. Leave empty if you are using Azure OpenAI Cloud Services.',
-                placeholder: 'YOUR-BASE-PATH',
-                optional: true
+                placeholder: 'YOUR-INSTANCE-NAME'
             },
             {
                 label: 'Azure OpenAI Api Deployment Name',
