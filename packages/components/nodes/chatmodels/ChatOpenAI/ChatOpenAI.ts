@@ -168,6 +168,14 @@ class ChatOpenAI_ChatModels implements INode {
                 type: 'json',
                 optional: true,
                 additionalParams: true
+            },
+            {
+                label: 'Streaming',
+                name: 'streaming',
+                type: 'boolean',
+                default: true,
+                optional: true,
+                additionalParams: true
             }
         ]
     }
