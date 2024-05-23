@@ -1,5 +1,8 @@
 import path from 'path'
 import * as fs from 'fs'
+import { StatusCodes } from 'http-status-codes'
+import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+import { getErrorMessage } from '../../errors/utils'
 
 // Get all templates for marketplaces
 const getAllTemplates = async () => {
@@ -41,6 +44,25 @@ const getAllTemplates = async () => {
             }
             templates.push(template)
         })
+
+        marketplaceDir = path.join(__dirname, '..', '..', '..', 'marketplaces', 'agentflows')
+        jsonsInDir = fs.readdirSync(marketplaceDir).filter((file) => path.extname(file) === '.json')
+        jsonsInDir.forEach((file, index) => {
+            const filePath = path.join(__dirname, '..', '..', '..', 'marketplaces', 'agentflows', file)
+            const fileData = fs.readFileSync(filePath)
+            const fileDataObj = JSON.parse(fileData.toString())
+            const template = {
+                id: index,
+                templateName: file.split('.json')[0],
+                flowData: fileData.toString(),
+                badge: fileDataObj?.badge,
+                framework: fileDataObj?.framework,
+                categories: fileDataObj?.categories,
+                type: 'Agentflow',
+                description: fileDataObj?.description || ''
+            }
+            templates.push(template)
+        })
         const sortedTemplates = templates.sort((a, b) => a.templateName.localeCompare(b.templateName))
         const FlowiseDocsQnAIndex = sortedTemplates.findIndex((tmp) => tmp.templateName === 'Flowise Docs QnA')
         if (FlowiseDocsQnAIndex > 0) {
@@ -49,7 +71,10 @@ const getAllTemplates = async () => {
         const dbResponse = sortedTemplates
         return dbResponse
     } catch (error) {
-        throw new Error(`Error: marketplacesService.getAllTemplates - ${error}`)
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: marketplacesService.getAllTemplates - ${getErrorMessage(error)}`
+        )
     }
 }
 
