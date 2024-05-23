@@ -4,7 +4,13 @@ import { BufferMemory, BufferMemoryInput } from 'langchain/memory'
 import { UpstashRedisChatMessageHistory } from '@langchain/community/stores/message/upstash_redis'
 import { mapStoredMessageToChatMessage, AIMessage, HumanMessage, StoredMessage, BaseMessage } from '@langchain/core/messages'
 import { FlowiseMemory, IMessage, INode, INodeData, INodeParams, MemoryMethods, MessageType } from '../../../src/Interface'
-import { convertBaseMessagetoIMessage, getBaseClasses, getCredentialData, getCredentialParam } from '../../../src/utils'
+import {
+    convertBaseMessagetoIMessage,
+    getBaseClasses,
+    getCredentialData,
+    getCredentialParam,
+    mapChatMessageToBaseMessage
+} from '../../../src/utils'
 import { ICommonObject } from '../../../src/Interface'
 
 let redisClientSingleton: Redis
@@ -40,7 +46,7 @@ class UpstashRedisBackedChatMemory_Memory implements INode {
     constructor() {
         this.label = 'Upstash Redis-Backed Chat Memory'
         this.name = 'upstashRedisBackedChatMemory'
-        this.version = 1.0
+        this.version = 2.0
         this.type = 'UpstashRedisBackedChatMemory'
         this.icon = 'upstash.svg'
         this.category = 'Memory'
@@ -77,6 +83,13 @@ class UpstashRedisBackedChatMemory_Memory implements INode {
                 description: 'Omit this parameter to make sessions never expire',
                 additionalParams: true,
                 optional: true
+            },
+            {
+                label: 'Memory Key',
+                name: 'memoryKey',
+                type: 'string',
+                default: 'chat_history',
+                additionalParams: true
             }
         ]
     }
@@ -89,8 +102,8 @@ class UpstashRedisBackedChatMemory_Memory implements INode {
 const initalizeUpstashRedis = async (nodeData: INodeData, options: ICommonObject): Promise<BufferMemory> => {
     const baseURL = nodeData.inputs?.baseURL as string
     const sessionId = nodeData.inputs?.sessionId as string
+    const memoryKey = nodeData.inputs?.memoryKey as string
     const _sessionTTL = nodeData.inputs?.sessionTTL as string
-
     const sessionTTL = _sessionTTL ? parseInt(_sessionTTL, 10) : undefined
 
     const credentialData = await getCredentialData(nodeData.credential ?? '', options)
@@ -108,7 +121,7 @@ const initalizeUpstashRedis = async (nodeData: INodeData, options: ICommonObject
     })
 
     const memory = new BufferMemoryExtended({
-        memoryKey: 'chat_history',
+        memoryKey: memoryKey ?? 'chat_history',
         chatHistory: redisChatMessageHistory,
         sessionId,
         sessionTTL,
@@ -136,7 +149,11 @@ class BufferMemoryExtended extends FlowiseMemory implements MemoryMethods {
         this.sessionTTL = fields.sessionTTL
     }
 
-    async getChatMessages(overrideSessionId = '', returnBaseMessages = false): Promise<IMessage[] | BaseMessage[]> {
+    async getChatMessages(
+        overrideSessionId = '',
+        returnBaseMessages = false,
+        prependMessages?: IMessage[]
+    ): Promise<IMessage[] | BaseMessage[]> {
         if (!this.redisClient) return []
 
         const id = overrideSessionId ? overrideSessionId : this.sessionId
@@ -144,6 +161,9 @@ class BufferMemoryExtended extends FlowiseMemory implements MemoryMethods {
         const orderedMessages = rawStoredMessages.reverse()
         const previousMessages = orderedMessages.filter((x): x is StoredMessage => x.type !== undefined && x.data.content !== undefined)
         const baseMessages = previousMessages.map(mapStoredMessageToChatMessage)
+        if (prependMessages?.length) {
+            baseMessages.unshift(...mapChatMessageToBaseMessage(prependMessages))
+        }
         return returnBaseMessages ? baseMessages : convertBaseMessagetoIMessage(baseMessages)
     }
 

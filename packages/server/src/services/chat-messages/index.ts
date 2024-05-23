@@ -1,14 +1,15 @@
-import { FindOptionsWhere } from 'typeorm'
-import path from 'path'
+import { DeleteResult, FindOptionsWhere } from 'typeorm'
+import { StatusCodes } from 'http-status-codes'
 import { chatType, IChatMessage } from '../../Interface'
 import { utilGetChatMessage } from '../../utils/getChatMessage'
 import { utilAddChatMessage } from '../../utils/addChatMesage'
 import { getRunningExpressApp } from '../../utils/getRunningExpressApp'
 import { ChatMessageFeedback } from '../../database/entities/ChatMessageFeedback'
-import { getStoragePath } from 'flowise-components'
-import { deleteFolderRecursive } from '../../utils'
+import { removeFilesFromStorage } from 'flowise-components'
 import logger from '../../utils/logger'
 import { ChatMessage } from '../../database/entities/ChatMessage'
+import { InternalFlowiseError } from '../../errors/internalFlowiseError'
+import { getErrorMessage } from '../../errors/utils'
 
 // Add chatmessages for chatflowid
 const createChatMessage = async (chatMessage: Partial<IChatMessage>) => {
@@ -16,7 +17,10 @@ const createChatMessage = async (chatMessage: Partial<IChatMessage>) => {
         const dbResponse = await utilAddChatMessage(chatMessage)
         return dbResponse
     } catch (error) {
-        throw new Error(`Error: chatMessagesService.createChatMessage - ${error}`)
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatMessagesService.createChatMessage - ${getErrorMessage(error)}`
+        )
     }
 }
 
@@ -32,7 +36,7 @@ const getAllChatMessages = async (
     endDate?: string,
     messageId?: string,
     feedback?: boolean
-): Promise<any> => {
+): Promise<ChatMessage[]> => {
     try {
         const dbResponse = await utilGetChatMessage(
             chatflowId,
@@ -48,7 +52,10 @@ const getAllChatMessages = async (
         )
         return dbResponse
     } catch (error) {
-        throw new Error(`Error: chatMessagesService.getAllChatMessages - ${error}`)
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatMessagesService.getAllChatMessages - ${getErrorMessage(error)}`
+        )
     }
 }
 
@@ -64,7 +71,7 @@ const getAllInternalChatMessages = async (
     endDate?: string,
     messageId?: string,
     feedback?: boolean
-): Promise<any> => {
+): Promise<ChatMessage[]> => {
     try {
         const dbResponse = await utilGetChatMessage(
             chatflowId,
@@ -80,23 +87,29 @@ const getAllInternalChatMessages = async (
         )
         return dbResponse
     } catch (error) {
-        throw new Error(`Error: chatMessagesService.getAllInternalChatMessages - ${error}`)
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatMessagesService.getAllInternalChatMessages - ${getErrorMessage(error)}`
+        )
     }
 }
 
-const removeAllChatMessages = async (chatId: string, chatflowid: string, deleteOptions: FindOptionsWhere<ChatMessage>): Promise<any> => {
+const removeAllChatMessages = async (
+    chatId: string,
+    chatflowid: string,
+    deleteOptions: FindOptionsWhere<ChatMessage>
+): Promise<DeleteResult> => {
     try {
         const appServer = getRunningExpressApp()
 
-        // remove all related feedback records
+        // Remove all related feedback records
         const feedbackDeleteOptions: FindOptionsWhere<ChatMessageFeedback> = { chatId }
         await appServer.AppDataSource.getRepository(ChatMessageFeedback).delete(feedbackDeleteOptions)
 
         // Delete all uploads corresponding to this chatflow/chatId
         if (chatId) {
             try {
-                const directory = path.join(getStoragePath(), chatflowid, chatId)
-                deleteFolderRecursive(directory)
+                await removeFilesFromStorage(chatflowid, chatId)
             } catch (e) {
                 logger.error(`[server]: Error deleting file storage for chatflow ${chatflowid}, chatId ${chatId}: ${e}`)
             }
@@ -104,7 +117,32 @@ const removeAllChatMessages = async (chatId: string, chatflowid: string, deleteO
         const dbResponse = await appServer.AppDataSource.getRepository(ChatMessage).delete(deleteOptions)
         return dbResponse
     } catch (error) {
-        throw new Error(`Error: chatMessagesService.removeAllChatMessages - ${error}`)
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatMessagesService.removeAllChatMessages - ${getErrorMessage(error)}`
+        )
+    }
+}
+
+const abortChatMessage = async (chatId: string, chatflowid: string) => {
+    try {
+        const appServer = getRunningExpressApp()
+
+        const endingNodeData = appServer.chatflowPool.activeChatflows[`${chatflowid}_${chatId}`]?.endingNodeData as any
+
+        if (endingNodeData && endingNodeData.signal) {
+            try {
+                endingNodeData.signal.abort()
+                await appServer.chatflowPool.remove(`${chatflowid}_${chatId}`)
+            } catch (e) {
+                logger.error(`[server]: Error aborting chat message for ${chatflowid}, chatId ${chatId}: ${e}`)
+            }
+        }
+    } catch (error) {
+        throw new InternalFlowiseError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Error: chatMessagesService.abortChatMessage - ${getErrorMessage(error)}`
+        )
     }
 }
 
@@ -112,5 +150,6 @@ export default {
     createChatMessage,
     getAllChatMessages,
     getAllInternalChatMessages,
-    removeAllChatMessages
+    removeAllChatMessages,
+    abortChatMessage
 }
